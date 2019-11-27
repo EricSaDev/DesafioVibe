@@ -1,0 +1,59 @@
+﻿
+@model LoginDemo.Models.User
+@{
+    ViewData["Title"] = "Cadastro";
+}
+<h2>Cadastro</h2>
+<div style="padding-top:50px;"></div>
+<div style="padding:50px;">
+    <div class="row">        
+        <div class="col-lg-4 col-md-4 col-sm-4">
+            <div>
+                @using (Html.BeginForm("Cadastrar", "Home", FormMethod.Post, new { role = "form" }))
+                {
+                    <div>
+                        @Html.AntiForgeryToken()
+                        <div>
+                            <label>CPF</label><br />
+                        </div>
+                        <div>
+                            @Html.TextBoxFor(m => m.CPF, new { @class = "form-control txtbox" })<small>999.999.999-99</small>
+                        </div>
+                        <div style="padding-top:20px;"></div>
+                        <div>
+                            <label>Nome</label><br />
+                        </div>
+                        <div>
+                            @Html.TextBoxFor(m => m.NOME, new { @class = "form-control txtbox" })
+                        </div>
+                        <div style="padding-top:20px;"></div>
+                        <div>
+                            <label>Data de nascimento</label><br />
+                        </div>
+                        <div>
+                            @Html.TextBoxFor(m => m.NASCIMENTO, new { @class = "form-control txtbox" })<small>DD/MM/YYYY</small>
+                        </div>
+
+                        <div style="padding-top:20px;"></div>
+                        <div>
+                            <label>Senha</label><br />
+                        </div>
+                        <div>
+                            @Html.PasswordFor(m => m.SENHA, new { @class = "form-control txtbox" })
+                        </div>
+                    </div>
+                    <div style="padding-top:10px;">
+                        <div style="color:red;">@ViewBag.Message</div>
+                    </div>
+                    <div style="padding-left:19%;">
+                        <div style="padding-top:20px;">
+                            <input class="btn btn-primary btn-lg rph-login-button" type="submit" value="Cadastrar" />
+                            <a href="/Home/Index" class="btn btn-info btn-lg rph-login-button">Voltar</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

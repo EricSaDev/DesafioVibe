@@ -1,0 +1,34 @@
+﻿@model LoginDemo.Models.ClienteDetalhe
+
+@{
+    ViewData["Title"] = "ClienteDetalhe";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>ClienteDetalhe</h2>
+
+<div>
+    <dl class="dl-horizontal">
+        <dt>Foto</dt>
+        <dd><img src="@Html.DisplayFor(model => model.urlImagem)" alt="Smiley face" height="250"><br /></dd>
+        
+        <dt>Empresa</dt>
+        <dd>@Html.DisplayFor(model => model.empresa)<br /></dd>
+
+        <dt>Cidade</dt>
+        <dd>@Html.DisplayFor(model => model.endereco.cidade)<br /></dd>
+
+        <dt>Endereço</dt>
+        <dd>@Html.DisplayFor(model => model.endereco.endereco)<br /></dd>
+
+        <dt>Número</dt>
+        <dd>@Html.DisplayFor(model => model.endereco.numero)<br /></dd>
+
+        <dt>Complemento</dt>
+        <dd>@Html.DisplayFor(model => model.endereco.complemento)<br /></dd>
+
+    </dl>
+</div>
+<div>
+    <a href="/Dashboard/Cliente" class="btn btn-info btn-lg rph-login-button">Voltar</a>
+</div>

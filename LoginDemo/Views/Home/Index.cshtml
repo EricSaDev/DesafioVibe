@@ -1,0 +1,76 @@
+﻿@model LoginDemo.Models.User
+@{
+    ViewData["Title"] = "Login";
+}
+
+@if (User.Identity.IsAuthenticated) { <h2>Dados do usuário</h2> }else{<h2>Login</h2>}
+
+<div style="padding:12px;">
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="row">
+            Você está locado com o usuário <span style="font-size:large;color:forestgreen;">@User.Identity.Name</span>
+        </div>
+        <div style="padding-top:30px;"></div>
+        <div class="row">
+            <div class="col-md-12">
+                <div><b>Dados do usuário:</b></div>
+                <div style="padding-top:10px;">
+                    <div>
+                        <table>
+                            <tr>
+                                <td style="width:50%;">CPF : <label>@Model.CPF</label></td>
+                            </tr>
+                            <tr>
+                                <td>Nome : <label>@Model.NOME</label></td>
+                            </tr>
+                            <tr>
+                                <td>Data de nascimento : <label>@Model.NASCIMENTO.ToString().Substring(0, 10)</label></td>
+                            </tr>
+                            <tr>
+                                <td>Perfil : <label style="color:forestgreen">@Model.PERFIL</label></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">         
+            <div class="col-lg-4 col-md-4 col-sm-4">
+                <div>
+                    @using (Html.BeginForm("LoginUser", "Home", FormMethod.Post, new { role = "form" }))
+                    {
+                        <div>
+                            @Html.AntiForgeryToken()
+                            <div>
+                                <label>CPF </label><br />
+                            </div>
+                            <div>
+                                @Html.TextBoxFor(m => m.CPF, new { @class = "form-control txtbox" })<small>999.999.999-99</small>
+                            </div>
+                            <div style="padding-top:20px;"></div>
+                            <div>
+                                <label>Senha</label><br />
+                            </div>
+                            <div>
+                                @Html.PasswordFor(m => m.SENHA, new { @class = "form-control txtbox" })
+                            </div>
+                        </div>
+                        <div style="padding-top:10px;">
+                            <div style="color:red;">@ViewBag.Message</div>
+                        </div>
+                        <div style="padding-left:19%;">
+                            <div style="padding-top:20px;">
+                                <input class="btn btn-primary btn-lg rph-login-button" type="submit" value="Entrar" />
+                                <a href="/Home/Cadastro" class="btn btn-info btn-lg rph-login-button">Cadastre-se</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
