@@ -14,42 +14,22 @@ namespace LoginDemo
 {
     public class TokenProvider
     {
-        public tokenAPI tokenAPI = new tokenAPI();
-
-        public string LoginUser(User userLogin)
+        public User LoginUser(User userLogin)
         {
-            RetornoDesafioAPIs retornoDesafioAPIs = new RetornoDesafioAPIs();
+            var key = Encoding.ASCII.GetBytes("e10adc3949ba59abbe56e057f20f883e");
+            var JWToken = new JwtSecurityToken(
+                issuer: "http://localhost:62403/",
+                audience: "http://localhost:62403/",
+                claims: GetUserClaims(userLogin),
+                notBefore: new DateTimeOffset(DateTime.Now).DateTime,
+                expires: new DateTimeOffset(DateTime.Now.AddDays(7)).DateTime,
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            );
+            var token = new JwtSecurityTokenHandler().WriteToken(JWToken);
 
-            tokenAPI = retornoDesafioAPIs.getLogin(userLogin);
+            userLogin.LOCALACCESSTOKEN = token;
 
-            if (tokenAPI == null)
-                return null;
-
-            User user = retornoDesafioAPIs.getUsuario(userLogin, tokenAPI);
-                       
-            if (user == null)
-                return null;
-
-            string senhaMD5 = MD5.MD5Hash(userLogin.SENHA);
-
-            if (senhaMD5 == user.SENHA)
-            {
-                 var key = Encoding.ASCII.GetBytes("e10adc3949ba59abbe56e057f20f883e");
-                var JWToken = new JwtSecurityToken(
-                    issuer: "http://localhost:62403/",
-                    audience: "http://localhost:62403/",
-                    claims: GetUserClaims(user),
-                    notBefore: new DateTimeOffset(DateTime.Now).DateTime,
-                    expires: new DateTimeOffset(DateTime.Now.AddDays(7)).DateTime,
-                    signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                );
-                var token = new JwtSecurityTokenHandler().WriteToken(JWToken);
-                return token;
-            }
-            else
-            {
-                return null;
-            }
+            return userLogin;
         }        
 
         private IEnumerable<Claim> GetUserClaims(User user)

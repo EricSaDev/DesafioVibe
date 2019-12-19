@@ -8,49 +8,28 @@ using LoginDemo.Models;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using LoginDemo.CustomAttributes;
+using LoginDemo.Repositorio;
+using Microsoft.EntityFrameworkCore;
+using LoginDemo.Utils;
+using LoginDemo.Services;
 
 namespace LoginDemo.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
-        public IActionResult Index()
+        private PersisteContext persisteContext;
+
+        public object EntityFunctions { get; private set; }
+
+        public HomeController(PersisteContext pc)
         {
-            User objLoggedInUser = new User();
+            persisteContext = pc;
+        }
 
-            if (User.Identity.IsAuthenticated)
-            {
-                var claimsIndentity = HttpContext.User.Identity as ClaimsIdentity;
-                var userClaims = claimsIndentity.Claims;
-
-                if (HttpContext.User.Identity.IsAuthenticated)
-                {
-                    foreach (var claim in userClaims)
-                    {
-                        var cType = claim.Type;
-                        var cValue = claim.Value;
-                        switch (cType)
-                        {
-                            case "CPF":
-                                objLoggedInUser.CPF = cValue;
-                                break;
-                            case "NOME":
-                                objLoggedInUser.NOME = cValue;
-                                break;
-                            case "NASCIMENTO":
-                                objLoggedInUser.NASCIMENTO = DateTime.Parse(cValue);
-                                break;
-                            case "APIACCESSTOKEN":
-                                objLoggedInUser.APIACCESSTOKEN = cValue;
-                                break;
-                            case "PERFIL":
-                                objLoggedInUser.PERFIL = cValue;
-                                break;
-                        }
-                    }
-                    ViewBag.UserRole = GetRole();
-                }
-            }
-            return View("Index", objLoggedInUser);
+        public IActionResult Index()
+        {            
+            ViewBag.UserRole = GetRole();
+            return View("Index", DadosUsuarioLogado);
         }
 
         public IActionResult LoginUser(User user)
@@ -60,18 +39,69 @@ namespace LoginDemo.Controllers
                 ViewBag.Message = "Digite o usuário e a senha.";
                 return View("Index");
             }
+            //======================================================================
+            tokenAPI tokenAPI = new tokenAPI();
+            RetornoDesafioAPIs retornoDesafioAPIs = new RetornoDesafioAPIs();
 
-            TokenProvider _tokenProvider = new TokenProvider();
-            var userToken = _tokenProvider.LoginUser(user);
+            tokenAPI = retornoDesafioAPIs.getLogin(user);
 
-            tokenAPI tokenAPI = _tokenProvider.tokenAPI;
-
-            if (userToken != null)
+            if (tokenAPI == null)
             {
-                HttpContext.Session.SetString("JWToken", userToken);
+                var userLogin = persisteContext.User.AsNoTracking().FirstOrDefault(
+                        entry => entry.CPF.Equals(user.CPF) &&
+                        entry.SENHA.Equals(MD5.MD5Hash(user.SENHA)) &&
+                        entry.VALIDADELOGIN <= DateTime.Now
+                );
+                if (userLogin == null)
+                {
+                    ViewBag.Message = "Acesso não permitido.";
+                    return View("Index");
+                }
+                else
+                {
+                    user = userLogin;
+                }
+            }
+            
+            User usuario = retornoDesafioAPIs.getUsuario(user, tokenAPI);
+
+            if (usuario == null)
+                return null;
+            //======================================================================
+            TokenProvider _tokenProvider = new TokenProvider();
+            User userLogged = _tokenProvider.LoginUser(usuario);
+
+            if (userLogged.LOCALACCESSTOKEN != null)
+            {
+                HttpContext.Session.SetString("JWToken", userLogged.LOCALACCESSTOKEN);
                 HttpContext.Session.SetString("APIToken", tokenAPI.chave);
             }
-            return Redirect("~/Dashboard/Cliente");
+            //======================================================================
+            userLogged.VALIDADELOGIN = new DateTimeOffset(DateTime.Now.AddDays(7)).DateTime;
+
+            var userModel = persisteContext.User.AsNoTracking().FirstOrDefault(entry => entry.CPF.Equals(userLogged.CPF));
+            if (userModel != null){
+                persisteContext.Entry(userLogged).State = EntityState.Modified;
+            }
+            else{
+                persisteContext.User.Add(userLogged);
+
+                var clienteModel = persisteContext.Cliente.FirstOrDefault(entry => entry.USERCPF.Equals(userLogged.CPF));
+                if (clienteModel == null)
+                {
+                    List<Cliente> resListCliente = ClienteServices.getClientes(userLogged.APIACCESSTOKEN);
+                    foreach (Cliente cliente in resListCliente)
+                    {
+                        cliente.USERCPF = userLogged.CPF;
+                        persisteContext.Cliente.Add(cliente);
+                    }
+                }
+            }
+
+            persisteContext.SaveChanges();
+            //======================================================================
+            return Redirect("~/Cliente");
+            //======================================================================
         }
 
         public IActionResult Cadastro(User user)
@@ -101,7 +131,7 @@ namespace LoginDemo.Controllers
         public IActionResult Logoff()
         {
             HttpContext.Session.Clear();
-            return Redirect("~/Home/Index");
+            return Redirect("~/Home");
         }
 
         public JsonResult EndSession()
